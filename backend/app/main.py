@@ -1,3 +1,7 @@
+import asyncio
+import logging
+import os
+import urllib.request
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +20,28 @@ from .routers import (
     templates_router,
 )
 
+logger = logging.getLogger("netplantool.keepalive")
+
+
+async def _render_keepalive_worker(url: str, interval_seconds: int = 600):
+    """Background worker that pings the Render external URL every 10 min to prevent spinning down."""
+    # Delay initial ping by 30 seconds to allow the server to fully bind
+    await asyncio.sleep(30)
+    health_url = url.rstrip("/") + "/api/health"
+    logger.info("Render keep-alive worker started. Target: %s (interval: %ss)", health_url, interval_seconds)
+    while True:
+        try:
+            req = urllib.request.Request(
+                health_url,
+                headers={"User-Agent": "NetPlanTool-KeepAliveWorker/1.0"}
+            )
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=20).close())
+            logger.info("Render keep-alive ping succeeded: %s", health_url)
+        except Exception as exc:
+            logger.debug("Render keep-alive ping notice: %s", exc)
+        await asyncio.sleep(interval_seconds)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +51,20 @@ async def lifespan(app: FastAPI):
         seed_demo_project_if_empty(db)
     finally:
         db.close()
+
+    keepalive_task = None
+    render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("KEEP_ALIVE_URL")
+    if render_url:
+        keepalive_task = asyncio.create_task(_render_keepalive_worker(render_url))
+
     yield
+
+    if keepalive_task:
+        keepalive_task.cancel()
+        try:
+            await keepalive_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
@@ -59,6 +98,7 @@ app.include_router(exports_router, prefix=settings.API_PREFIX)
 app.include_router(templates_router, prefix=settings.API_PREFIX)
 
 
+@app.get("/health", tags=["system"])
 @app.get("/api/health", tags=["system"])
 def health_check():
     return {"status": "ok", "project": settings.PROJECT_NAME, "version": "1.0.0"}

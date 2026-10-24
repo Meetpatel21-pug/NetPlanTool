@@ -5,7 +5,9 @@
   "scripts": {
     "dev:backend": "python -m uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000",
     "dev:frontend": "npm --prefix frontend run dev -- --host 0.0.0.0",
-    "dev:all": "concurrently --names backend,frontend --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev:all": "concurrently --names backend,frontend --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "keep-awake": "python scripts/keep_awake.py",
+    "keep-awake:once": "python scripts/keep_awake.py --once"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

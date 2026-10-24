@@ -305,6 +305,34 @@ Here are the recommended hosting platforms for deploying the Network Planning To
 5. In **Advanced Settings**, add a Persistent Disk (mount path: `/app`, size: 1GB) so your SQLite database persists across redeploys.
 6. Click **Create Web Service**. Render builds the multi-stage Docker container, runs tests, and deploys with a free `https://your-app.onrender.com` URL.
 
+#### ⏰ Keeping Render Always Awake (Preventing Inactivity Spin-Down)
+Render's free tier automatically suspends (spins down) web services after 15 minutes of inactivity. When a new visitor arrives, a 30–50 second cold start occurs. We have provided **3 built-in solutions** to keep your Render instance active 24/7 with zero cold starts:
+
+1. **Automatic Self-Pinger (Zero Setup Required):**
+   Render automatically injects the `RENDER_EXTERNAL_URL` environment variable into your Web Service. Our FastAPI backend automatically detects this on startup and starts an internal background worker that sends a keep-alive ping to `https://your-app.onrender.com/api/health` every 10 minutes, resetting the inactivity timer before Render can sleep!
+
+2. **GitHub Actions 12-Minute Cloud Cron (Recommended):**
+   We include [`.github/workflows/keep_awake.yml`](.github/workflows/keep_awake.yml) which runs completely free in GitHub's cloud on schedule (`*/12 * * * *`). Even if the service was ever sleeping, GitHub Actions pings your endpoint every 12 minutes to keep it active.
+   - Go to your GitHub repository $\to$ **Settings** $\to$ **Secrets and variables** $\to$ **Actions**.
+   - Add a repository variable or secret named `RENDER_APP_URL` with your Render URL (e.g. `https://netplantool.onrender.com/api/health`).
+   - You can also trigger it manually anytime under the **Actions** tab $\to$ **Render Keep Awake** $\to$ **Run workflow**.
+
+3. **Standalone Python Keep-Awake Script:**
+   You can run our keep-awake script locally, on a server, or in any cron job:
+   ```bash
+   # Run continuously every 10 minutes (Ctrl+C to stop)
+   python scripts/keep_awake.py --url https://your-app.onrender.com/api/health
+
+   # Or run via npm
+   npm run keep-awake -- --url https://your-app.onrender.com/api/health
+
+   # Single-shot ping (ideal for custom cron or task schedulers)
+   python scripts/keep_awake.py --url https://your-app.onrender.com/api/health --once
+   ```
+
+4. **Free External Monitoring Services (Optional Alternative):**
+   You can also add `https://your-app.onrender.com/api/health` to [UptimeRobot](https://uptimerobot.com/) or [cron-job.org](https://cron-job.org/) as an HTTP monitor set to ping every 5–10 minutes for free.
+
 ---
 
 ### Option 2: Railway (Best for High Developer Experience)

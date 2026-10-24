@@ -1,0 +1,33 @@
+name: Render Keep Awake
+
+on:
+  schedule:
+    # Runs every 12 minutes (Render free tier spins down after 15 minutes of inactivity)
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+    inputs:
+      custom_url:
+        description: 'Optional custom URL to ping'
+        required: false
+        default: ''
+
+jobs:
+  keep-awake:
+    name: Ping Render Web Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ping Render Service
+        env:
+          RENDER_APP_URL: ${{ github.event.inputs.custom_url || vars.RENDER_APP_URL || secrets.RENDER_APP_URL }}
+        run: |
+          TARGET_URL="${RENDER_APP_URL:-https://netplantool.onrender.com/api/health}"
+          echo "Target keep-awake URL: $TARGET_URL"
+          python scripts/keep_awake.py --url "$TARGET_URL" --once
