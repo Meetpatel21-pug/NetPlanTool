@@ -118,6 +118,21 @@ def run_project_validation(project: Project) -> List[ValidationIssueSchema]:
                         related_record_ids=[s1.id],
                         checked_at=now
                     ))
+
+                # Gateway inside dynamic DHCP pool collision check
+                if s1.gateway:
+                    gw_addr = ipaddress.IPv4Address(s1.gateway.strip())
+                    if int(d_start) <= int(gw_addr) <= int(d_end):
+                        issues.append(ValidationIssueSchema(
+                            id=str(uuid.uuid4()),
+                            project_id=project.id,
+                            issue_code="GATEWAY_IN_DHCP_POOL",
+                            severity="error",
+                            message=f"Default gateway '{s1.gateway}' in subnet '{s1.label}' falls inside dynamic DHCP pool ({s1.dhcp_start} - {s1.dhcp_end}).",
+                            recommended_action="Adjust DHCP pool boundaries so the default gateway IP is excluded.",
+                            related_record_ids=[s1.id],
+                            checked_at=now
+                        ))
             except Exception:
                 pass
 
@@ -162,6 +177,31 @@ def run_project_validation(project: Project) -> List[ValidationIssueSchema]:
                         related_record_ids=[a.id, sub.id],
                         checked_at=now
                     ))
+
+                # Network and broadcast address assignment check for standard subnets
+                if sub_net.prefixlen < 31:
+                    if a_ip == sub_net.network_address:
+                        issues.append(ValidationIssueSchema(
+                            id=str(uuid.uuid4()),
+                            project_id=project.id,
+                            issue_code="NETWORK_ADDRESS_ASSIGNED",
+                            severity="error",
+                            message=f"Assigned IP '{a.ipv4_address}' is the network address for subnet '{sub.label}' ({sub.cidr}).",
+                            recommended_action="Reassign to a valid usable host address.",
+                            related_record_ids=[a.id, sub.id],
+                            checked_at=now
+                        ))
+                    elif a_ip == sub_net.broadcast_address:
+                        issues.append(ValidationIssueSchema(
+                            id=str(uuid.uuid4()),
+                            project_id=project.id,
+                            issue_code="BROADCAST_ADDRESS_ASSIGNED",
+                            severity="error",
+                            message=f"Assigned IP '{a.ipv4_address}' is the broadcast address for subnet '{sub.label}' ({sub.cidr}).",
+                            recommended_action="Reassign to a valid usable host address.",
+                            related_record_ids=[a.id, sub.id],
+                            checked_at=now
+                        ))
 
                 # DHCP pool collision
                 if a.assignment_type in ["planned static", "reserved"] and sub.dhcp_start and sub.dhcp_end:

@@ -91,3 +91,28 @@ class TestProjectLifecycleAndCRUD:
         resp = client.get("/api/projects/non-existent-uuid")
         assert resp.status_code == 404
         assert "not found" in resp.json()["detail"].lower()
+
+    def test_sqlite_foreign_key_cascade_deletion(self, client: TestClient):
+        # Create project with subnet and device
+        create_resp = client.post("/api/projects", json={"name": "Cascade Parent"})
+        p_id = create_resp.json()["id"]
+
+        sub_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={"cidr": "172.20.0.0/24", "label": "Cascade Subnet"}
+        )
+        s_id = sub_resp.json()["id"]
+
+        dev_resp = client.post(
+            f"/api/projects/{p_id}/devices",
+            json={"name": "Cascade Switch", "device_type": "switch", "role": "Distribution"}
+        )
+        d_id = dev_resp.json()["id"]
+
+        # Delete project
+        del_resp = client.delete(f"/api/projects/{p_id}")
+        assert del_resp.status_code == 204
+
+        # Verify child resources are gone (cascaded)
+        assert client.get(f"/api/projects/{p_id}/devices/{d_id}").status_code == 404
+        assert client.get(f"/api/projects/{p_id}/subnets").status_code == 404

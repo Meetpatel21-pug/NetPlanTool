@@ -14,6 +14,8 @@ import {
   FileCheck2,
   Tag
 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { cardItemVariants, containerStaggerVariants } from '../../utils/motion';
 
 interface ValidationPanelProps {
   projectId: string;
@@ -148,7 +150,7 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
 
       {/* Summary KPI Cards */}
       {report && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem' }}>
           <div className="result-card">
             <div className="result-card-header">
               <span className="result-label">Total Checks Found</span>
@@ -230,36 +232,38 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
             </div>
           ) : report.error_count > 0 ? (
             <div style={{
-              background: 'rgba(244, 63, 94, 0.08)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
+              background: 'rgba(244, 63, 94, 0.1)',
+              border: '2px solid rgba(244, 63, 94, 0.3)',
               borderRadius: 'var(--radius-md)',
               padding: '1rem 1.25rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
-              color: '#fecdd3',
-              fontSize: '0.875rem'
+              color: '#881337',
+              fontSize: '0.875rem',
+              boxShadow: 'var(--clay-shadow-sm)'
             }}>
               <ShieldAlert className="w-5 h-5" style={{ color: '#f43f5e', flexShrink: 0 }} />
               <div>
-                <strong>Action Required:</strong> {report.error_count} critical configuration {report.error_count === 1 ? 'error must' : 'errors must'} be resolved before exporting final implementation artifacts.
+                <strong style={{ color: '#9f1239' }}>Action Required:</strong> {report.error_count} critical configuration {report.error_count === 1 ? 'error must' : 'errors must'} be resolved before exporting final implementation artifacts.
               </div>
             </div>
           ) : (
             <div style={{
-              background: 'rgba(245, 158, 11, 0.08)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '2px solid rgba(245, 158, 11, 0.3)',
               borderRadius: 'var(--radius-md)',
               padding: '1rem 1.25rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
-              color: '#fde68a',
-              fontSize: '0.875rem'
+              color: '#78350f',
+              fontSize: '0.875rem',
+              boxShadow: 'var(--clay-shadow-sm)'
             }}>
               <AlertTriangle className="w-5 h-5" style={{ color: '#f59e0b', flexShrink: 0 }} />
               <div>
-                <strong>Advisory Notice:</strong> Configuration is technically viable, but {report.warning_count} potential {report.warning_count === 1 ? 'risk or bottleneck was' : 'risks or bottlenecks were'} flagged for review.
+                <strong style={{ color: '#92400e' }}>Advisory Notice:</strong> Configuration is technically viable, but {report.warning_count} potential {report.warning_count === 1 ? 'risk or bottleneck was' : 'risks or bottlenecks were'} flagged for review.
               </div>
             </div>
           )}
@@ -274,10 +278,11 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
           alignItems: 'center', 
           flexWrap: 'wrap', 
           gap: '1rem',
-          background: 'rgba(17, 24, 39, 0.5)',
-          padding: '0.75rem 1rem',
+          background: 'var(--bg-card)',
+          padding: '0.75rem 1.25rem',
           borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)'
+          border: '1px solid var(--border-active)',
+          boxShadow: 'var(--clay-shadow-sm)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -346,16 +351,23 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
       )}
 
       {/* Issues List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      <motion.div 
+        variants={containerStaggerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}
+      >
         {filteredIssues.map((issue) => (
-          <div 
+          <motion.div 
             key={issue.id}
+            variants={cardItemVariants}
             style={{
-              background: 'rgba(13, 19, 31, 0.75)',
-              border: '1px solid',
-              borderColor: issue.severity === 'error' ? 'rgba(244, 63, 94, 0.3)' : issue.severity === 'warning' ? 'rgba(245, 158, 11, 0.3)' : 'var(--border-subtle)',
+              background: 'var(--bg-card)',
+              border: '2px solid',
+              borderColor: issue.severity === 'error' ? 'rgba(244, 63, 94, 0.4)' : issue.severity === 'warning' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.7)',
               borderRadius: 'var(--radius-md)',
               padding: '1.25rem',
+              boxShadow: 'var(--clay-shadow-sm)',
               transition: 'all var(--transition-fast)'
             }}
           >
@@ -366,11 +378,11 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
                 <span style={{ 
                   fontFamily: 'var(--font-mono)', 
                   fontSize: '0.775rem', 
-                  color: 'var(--text-muted)',
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--bg-secondary)',
                   padding: '0.15rem 0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid rgba(255, 255, 255, 0.06)'
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)'
                 }}>
                   {issue.issue_code}
                 </span>
@@ -384,13 +396,14 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
 
             {/* Recommended action box */}
             <div style={{
-              background: 'rgba(0, 0, 0, 0.3)',
+              background: 'var(--bg-secondary)',
               borderRadius: 'var(--radius-sm)',
               padding: '0.75rem 0.9rem',
               display: 'flex',
               alignItems: 'flex-start',
               gap: '0.6rem',
-              borderLeft: `3px solid ${issue.severity === 'error' ? '#f43f5e' : issue.severity === 'warning' ? '#f59e0b' : 'var(--accent-cyan)'}`
+              border: '1px solid var(--border-subtle)',
+              borderLeft: `4px solid ${issue.severity === 'error' ? '#f43f5e' : issue.severity === 'warning' ? '#f59e0b' : 'var(--accent-cyan)'}`
             }}>
               <Wrench className="w-4 h-4" style={{ 
                 color: issue.severity === 'error' ? '#f43f5e' : issue.severity === 'warning' ? '#f59e0b' : 'var(--accent-cyan)',
@@ -412,11 +425,12 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
                   {issue.related_record_ids.map((recId, idx) => (
                     <span 
                       key={idx}
+                      className="mono-spec"
                       style={{ 
-                        fontFamily: 'var(--font-mono)', 
-                        background: 'rgba(255, 255, 255, 0.05)', 
+                        background: 'var(--bg-secondary)', 
                         padding: '0.05rem 0.35rem', 
-                        borderRadius: '3px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border-subtle)',
                         color: 'var(--text-secondary)'
                       }}
                     >
@@ -426,7 +440,7 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
         ))}
 
         {report && report.issues.length > 0 && filteredIssues.length === 0 && (
@@ -434,7 +448,7 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({ projectId }) =
             No issues match the selected severity filter.
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Safety / Compliance footer reminder */}
       <div style={{ 

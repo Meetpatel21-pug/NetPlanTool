@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { calculateSubnet } from '../../api/calculator';
 import { SubnetCalculateResponse } from '../../types/calculator';
 import { 
@@ -13,6 +13,9 @@ import {
   Server,
   Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { pageEntranceVariants, toastVariants } from '../../utils/motion';
+import { ClaySelect } from '../../components/common/ClaySelect';
 
 export const SubnetCalculator: React.FC = () => {
   const [inputMode, setInputMode] = useState<'cidr' | 'split'>('cidr');
@@ -25,11 +28,26 @@ export const SubnetCalculator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (msg: string) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2500);
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage(null);
+      toastTimerRef.current = null;
+    }, 2500);
   };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -156,18 +174,18 @@ export const SubnetCalculator: React.FC = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <label htmlFor="prefix-select" className="form-label">Prefix (/)</label>
-                <select
+                <ClaySelect
                   id="prefix-select"
-                  className="select-input"
-                  value={prefixInput}
-                  onChange={(e) => setPrefixInput(Number(e.target.value))}
-                >
-                  {Array.from({ length: 33 }, (_, i) => 32 - i).map((p) => (
-                    <option key={p} value={p}>
-                      /{p} {p === 31 ? '(RFC 3021)' : p === 32 ? '(Host)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  variant="form"
+                  ariaLabel="Prefix length"
+                  value={String(prefixInput)}
+                  onChange={(val) => setPrefixInput(Number(val))}
+                  options={Array.from({ length: 33 }, (_, i) => 32 - i).map((p) => ({
+                    value: String(p),
+                    label: `/${p}`,
+                    sublabel: p === 31 ? 'RFC 3021 Point-to-Point' : p === 32 ? 'Single Host' : undefined
+                  }))}
+                />
               </div>
             </div>
           )}
@@ -284,7 +302,12 @@ export const SubnetCalculator: React.FC = () => {
           </div>
 
           {result ? (
-            <div>
+            <motion.div
+              key={result.cidr}
+              variants={pageEntranceVariants}
+              initial="hidden"
+              animate="visible"
+            >
               {/* Special Convention Banner */}
               <div 
                 style={{ 
@@ -319,7 +342,7 @@ export const SubnetCalculator: React.FC = () => {
                       {copiedField === 'CIDR' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
-                  <div className="result-value accent">{result.cidr}</div>
+                  <div className="result-value accent mono-spec">{result.cidr}</div>
                   <div className="result-subtext">{result.is_private ? 'RFC 1918 Private Block' : 'Public IPv4 Block'}</div>
                 </div>
 
@@ -336,8 +359,8 @@ export const SubnetCalculator: React.FC = () => {
                       {copiedField === 'Netmask' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
-                  <div className="result-value">{result.netmask}</div>
-                  <div className="result-subtext">Wildcard: {result.wildcard_mask}</div>
+                  <div className="result-value mono-spec">{result.netmask}</div>
+                  <div className="result-subtext">Wildcard: <span className="mono-spec">{result.wildcard_mask}</span></div>
                 </div>
 
                 {/* Network Address */}
@@ -353,7 +376,7 @@ export const SubnetCalculator: React.FC = () => {
                       {copiedField === 'Network Address' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
-                  <div className="result-value">{result.network_address}</div>
+                  <div className="result-value mono-spec">{result.network_address}</div>
                   <div className="result-subtext">First address in block</div>
                 </div>
 
@@ -372,7 +395,7 @@ export const SubnetCalculator: React.FC = () => {
                       </button>
                     )}
                   </div>
-                  <div className="result-value">
+                  <div className="result-value mono-spec">
                     {result.broadcast_address || (
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>None (Special Prefix)</span>
                     )}
@@ -395,7 +418,7 @@ export const SubnetCalculator: React.FC = () => {
                       {copiedField === 'Usable Range' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
-                  <div className="result-value success">{result.usable_range}</div>
+                  <div className="result-value success mono-spec">{result.usable_range}</div>
                   <div className="result-subtext">
                     {result.usable_range_start && result.usable_range_end 
                       ? `${result.usable_range_start} through ${result.usable_range_end}`
@@ -408,7 +431,7 @@ export const SubnetCalculator: React.FC = () => {
                   <div className="result-card-header">
                     <span className="result-label">Total Addresses</span>
                   </div>
-                  <div className="result-value">{result.total_addresses.toLocaleString()}</div>
+                  <div className="result-value tabular-nums">{result.total_addresses.toLocaleString()}</div>
                   <div className="result-subtext">2^{result.host_bits} addresses</div>
                 </div>
 
@@ -416,7 +439,7 @@ export const SubnetCalculator: React.FC = () => {
                   <div className="result-card-header">
                     <span className="result-label">Usable Host Capacity</span>
                   </div>
-                  <div className="result-value success">{result.usable_addresses.toLocaleString()}</div>
+                  <div className="result-value success tabular-nums">{result.usable_addresses.toLocaleString()}</div>
                   <div className="result-subtext">
                     {result.prefix <= 30 ? 'Total - 2 (network/bcast)' : 'Special prefix convention'}
                   </div>
@@ -429,10 +452,10 @@ export const SubnetCalculator: React.FC = () => {
                   <span>Binary Bitmask Breakdown</span>
                   <div className="bit-legend">
                     <span className="bit-legend-item">
-                      <span className="dot-network"></span> {result.network_bits} Network Bits
+                      <span className="dot-network"></span> <span className="tabular-nums">{result.network_bits}</span> Network Bits
                     </span>
                     <span className="bit-legend-item">
-                      <span className="dot-host"></span> {result.host_bits} Host Bits
+                      <span className="dot-host"></span> <span className="tabular-nums">{result.host_bits}</span> Host Bits
                     </span>
                   </div>
                 </div>
@@ -440,18 +463,18 @@ export const SubnetCalculator: React.FC = () => {
                   <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
                     Netmask in Binary:
                   </span>
-                  <div className="binary-code">{result.binary_netmask}</div>
+                  <div className="binary-code mono-spec">{result.binary_netmask}</div>
                 </div>
                 <div>
                   <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
                     Network Address in Binary:
                   </span>
-                  <div className="binary-code" style={{ color: 'var(--accent-purple)' }}>
+                  <div className="binary-code mono-spec" style={{ color: 'var(--accent-purple)' }}>
                     {result.binary_network}
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ) : (
             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
               <Server className="w-12 h-12 mx-auto mb-3 opacity-40 text-cyan-400" />
@@ -462,12 +485,21 @@ export const SubnetCalculator: React.FC = () => {
       </div>
 
       {/* Floating Toast Feedback */}
-      {toastMessage && (
-        <div className="toast" role="status">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div 
+            className="toast" 
+            role="status"
+            variants={toastVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

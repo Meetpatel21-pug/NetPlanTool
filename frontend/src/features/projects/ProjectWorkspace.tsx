@@ -18,6 +18,8 @@ import {
   Clock,
   ArrowLeft
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { pageEntranceVariants } from '../../utils/motion';
 
 type WorkspaceTab = 'subnets' | 'inventory' | 'diagram' | 'validation' | 'reports';
 
@@ -126,8 +128,8 @@ export const ProjectWorkspace: React.FC = () => {
         </div>
       </div>
 
-      {/* Workspace Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+      {/* Workspace Tabs (Responsive: desktop flex row, mobile wrapped pill grid) */}
+      <div className="workspace-tabs-row">
         <button
           type="button"
           className={`nav-item ${activeTab === 'subnets' ? 'active' : ''}`}
@@ -171,21 +173,32 @@ export const ProjectWorkspace: React.FC = () => {
       </div>
 
       {/* Active Tab Panel */}
-      {activeTab === 'subnets' && (
-        <SubnetPlanner projectId={project.id} onProjectUpdated={loadProject} />
-      )}
-      {activeTab === 'inventory' && (
-        <IPInventory projectId={project.id} onProjectUpdated={loadProject} />
-      )}
-      {activeTab === 'diagram' && (
-        <NetworkDiagram projectId={project.id} onProjectUpdated={loadProject} />
-      )}
-      {activeTab === 'validation' && (
-        <ValidationPanel projectId={project.id} onProjectUpdated={loadProject} />
-      )}
-      {activeTab === 'reports' && (
-        <ReportScreen projectId={project.id} />
-      )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          variants={pageEntranceVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          style={{ width: '100%' }}
+        >
+          {activeTab === 'subnets' && (
+            <SubnetPlanner projectId={project.id} onProjectUpdated={loadProject} />
+          )}
+          {activeTab === 'inventory' && (
+            <IPInventory projectId={project.id} onProjectUpdated={loadProject} />
+          )}
+          {activeTab === 'diagram' && (
+            <NetworkDiagram projectId={project.id} onProjectUpdated={loadProject} />
+          )}
+          {activeTab === 'validation' && (
+            <ValidationPanel projectId={project.id} onProjectUpdated={loadProject} />
+          )}
+          {activeTab === 'reports' && (
+            <ReportScreen projectId={project.id} />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

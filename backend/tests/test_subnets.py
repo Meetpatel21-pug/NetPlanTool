@@ -175,3 +175,67 @@ class TestSubnetPlannerAllocations:
         client.delete(f"/api/projects/{p_id}/subnets/{sub_id}")
         v4 = client.get(f"/api/projects/{p_id}").json()["version"]
         assert v4 == v3 + 1
+
+    def test_gateway_inside_dhcp_pool_rejected(self, client: TestClient, test_project):
+        p_id = test_project["id"]
+        # Gateway 192.168.10.10 inside DHCP pool 192.168.10.5 - 192.168.10.50
+        resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={
+                "cidr": "192.168.10.0/24",
+                "label": "Gateway Collision Test",
+                "gateway": "192.168.10.10",
+                "dhcp_start": "192.168.10.5",
+                "dhcp_end": "192.168.10.50"
+            }
+        )
+        assert resp.status_code == 400
+        assert "cannot fall inside the dynamic DHCP pool range" in resp.json()["detail"]
+
+    def test_subnet_self_parenting_rejected(self, client: TestClient, test_project):
+        p_id = test_project["id"]
+        s_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={"cidr": "10.100.0.0/16", "label": "Self Parent Test"}
+        )
+        assert s_resp.status_code == 201
+        s_id = s_resp.json()["id"]
+
+        # Attempt to set subnet as its own parent
+        upd = client.put(
+            f"/api/projects/{p_id}/subnets/{s_id}",
+            json={"parent_subnet_id": s_id}
+        )
+        assert upd.status_code == 400
+        assert "A subnet cannot be its own parent" in upd.json()["detail"]
+
+    def test_subnet_cyclic_hierarchy_rejected(self, client: TestClient, test_project):
+        p_id = test_project["id"]
+        # Create root: 10.0.0.0/16
+        r_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={"cidr": "10.0.0.0/16", "label": "Root"}
+        )
+        root_id = r_resp.json()["id"]
+
+        # Create child under root: 10.0.1.0/24
+        c_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={"cidr": "10.0.1.0/24", "label": "Child", "parent_subnet_id": root_id}
+        )
+        child_id = c_resp.json()["id"]
+
+        # Create grandchild under child: 10.0.1.0/26
+        gc_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={"cidr": "10.0.1.0/26", "label": "Grandchild", "parent_subnet_id": child_id}
+        )
+        grandchild_id = gc_resp.json()["id"]
+
+        # Attempt to make root a child of its descendant (grandchild)
+        upd = client.put(
+            f"/api/projects/{p_id}/subnets/{root_id}",
+            json={"parent_subnet_id": grandchild_id}
+        )
+        assert upd.status_code == 400
+        assert "Cyclic subnet hierarchy detected" in upd.json()["detail"]

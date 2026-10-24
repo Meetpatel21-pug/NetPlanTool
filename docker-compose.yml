@@ -1,0 +1,17 @@
+services:
+  network-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: network-planning-toolkit
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+    volumes:
+      - network_db_data:/app
+    restart: unless-stopped
+
+volumes:
+  network_db_data:

@@ -21,6 +21,9 @@ import {
   Radio,
   X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { modalBackdropVariants, modalCardVariants, drawerVariants } from '../../utils/motion';
+import { ClaySelect } from '../../components/common/ClaySelect';
 
 interface IPInventoryProps {
   projectId: string;
@@ -34,6 +37,17 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(() => 
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -314,70 +328,66 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
 
           {/* Subnet Filter */}
           <div>
-            <select
-              aria-label="Filter by Subnet"
-              className="select-input"
-              style={{ fontSize: '0.825rem', padding: '0.5rem 0.75rem' }}
+            <ClaySelect
+              variant="filter"
+              ariaLabel="Filter by Subnet"
               value={selectedSubnet}
-              onChange={(e) => setSelectedSubnet(e.target.value)}
-            >
-              <option value="all">All Subnets ({subnets.length})</option>
-              {subnets.map(s => (
-                <option key={s.id} value={s.id}>{s.label} ({s.cidr})</option>
-              ))}
-            </select>
+              onChange={setSelectedSubnet}
+              options={[
+                { value: 'all', label: `All Subnets (${subnets.length})` },
+                ...subnets.map(s => ({ value: s.id, label: `${s.label} (${s.cidr})` }))
+              ]}
+            />
           </div>
 
           {/* Type Filter */}
           <div>
-            <select
-              aria-label="Filter by Type"
-              className="select-input"
-              style={{ fontSize: '0.825rem', padding: '0.5rem 0.75rem' }}
+            <ClaySelect
+              variant="filter"
+              ariaLabel="Filter by Type"
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-            >
-              <option value="all">All Assignment Types</option>
-              <option value="planned static">Planned Static</option>
-              <option value="reserved">Reserved</option>
-              <option value="DHCP pool">DHCP Pool</option>
-              <option value="gateway">Gateway</option>
-              <option value="unassigned">Unassigned</option>
-            </select>
+              onChange={setSelectedType}
+              options={[
+                { value: 'all', label: 'All Assignment Types' },
+                { value: 'planned static', label: 'Planned Static' },
+                { value: 'reserved', label: 'Reserved' },
+                { value: 'DHCP pool', label: 'DHCP Pool' },
+                { value: 'gateway', label: 'Gateway' },
+                { value: 'unassigned', label: 'Unassigned' }
+              ]}
+            />
           </div>
 
           {/* Status Filter */}
           <div>
-            <select
-              aria-label="Filter by Status"
-              className="select-input"
-              style={{ fontSize: '0.825rem', padding: '0.5rem 0.75rem' }}
+            <ClaySelect
+              variant="filter"
+              ariaLabel="Filter by Status"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-            >
-              <option value="all">All Statuses</option>
-              <option value="planned">Planned</option>
-              <option value="active">Active</option>
-              <option value="reserved">Reserved</option>
-              <option value="deprecated">Deprecated</option>
-            </select>
+              onChange={setSelectedStatus}
+              options={[
+                { value: 'all', label: 'All Statuses' },
+                { value: 'planned', label: 'Planned' },
+                { value: 'active', label: 'Active' },
+                { value: 'reserved', label: 'Reserved' },
+                { value: 'deprecated', label: 'Deprecated' }
+              ]}
+            />
           </div>
 
           {/* Role Filter */}
           {distinctRoles.length > 0 && (
             <div>
-              <select
-                aria-label="Filter by Role"
-                className="select-input"
-                style={{ fontSize: '0.825rem', padding: '0.5rem 0.75rem' }}
+              <ClaySelect
+                variant="filter"
+                ariaLabel="Filter by Role"
                 value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-              >
-                <option value="all">All Roles</option>
-                {distinctRoles.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+                onChange={setSelectedRole}
+                options={[
+                  { value: 'all', label: 'All Roles' },
+                  ...distinctRoles.map(r => ({ value: r, label: r }))
+                ]}
+              />
             </div>
           )}
         </div>
@@ -411,19 +421,132 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
             </button>
           )}
         </div>
+      ) : isMobile ? (
+        /* Mobile Card List View (100% visible on small mobile screens) */
+        <div className="show-on-mobile" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {filteredAssignments.map((a) => {
+            const assignedDevice = devices.find(d => d.id === a.device_id);
+            return (
+              <div
+                key={`mob-assign-${a.id}`}
+                className="glass-panel"
+                style={{
+                  padding: '0.9rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-card)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.55rem',
+                  boxShadow: 'var(--clay-shadow-sm)',
+                  marginBottom: '0.75rem'
+                }}
+              >
+                {/* Top row: IP + copy + status badge */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent-indigo)' }}>
+                      {a.ipv4_address}
+                    </span>
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      onClick={() => copyToClipboard(a.ipv4_address)}
+                      title="Copy IP Address"
+                    >
+                      {copiedIp === a.ipv4_address ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+
+                  <span 
+                    style={{
+                      fontSize: '0.725rem',
+                      fontWeight: 600,
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      textTransform: 'uppercase',
+                      ...getStatusBadgeStyle(a.status)
+                    }}
+                  >
+                    {a.status}
+                  </span>
+                </div>
+
+                {/* Device & Role */}
+                {assignedDevice ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 240, 255, 0.55)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                    {getDeviceIcon(assignedDevice.device_type)}
+                    <div>
+                      <div style={{ color: '#2d1f4e', fontWeight: 700, fontSize: '0.85rem' }}>{assignedDevice.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#6b5a8a' }}>{assignedDevice.role || assignedDevice.device_type}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No device bound</div>
+                )}
+
+                {/* Subnet & Type */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.75rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.65rem', fontWeight: 600 }}>SUBNET</span>
+                    <span style={{ color: '#2d1f4e', fontWeight: 600 }}>{a.subnet_label || 'Unassociated'}</span>
+                    {a.subnet_cidr && <span className="mono-spec" style={{ display: 'block', fontSize: '0.7rem', color: 'var(--accent-cyan)' }}>{a.subnet_cidr}</span>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.65rem', fontWeight: 600 }}>ALLOCATION</span>
+                    <span className={getTypeBadgeClass(a.assignment_type)} style={{ textTransform: 'capitalize', display: 'inline-block', fontSize: '0.7rem' }}>
+                      {a.assignment_type}
+                    </span>
+                  </div>
+                </div>
+
+                {a.notes && (
+                  <div style={{ fontSize: '0.725rem', color: '#6b5a8a', fontStyle: 'italic' }}>
+                    "{a.notes}"
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end', paddingTop: '0.35rem', borderTop: '1px solid rgba(139, 92, 246, 0.15)' }}>
+                  <button
+                    type="button"
+                    className="btn-clay-secondary"
+                    style={{ padding: '0.35rem 0.65rem', fontSize: '0.72rem', borderRadius: '999px' }}
+                    onClick={() => openEditAssignModal(a)}
+                    title="Edit Assignment"
+                  >
+                    <Edit3 className="w-3 h-3 text-indigo-600" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-clay-secondary"
+                    style={{ padding: '0.35rem 0.65rem', fontSize: '0.72rem', borderRadius: '999px', color: '#e11d48' }}
+                    onClick={() => handleDeleteAssign(a.id, a.ipv4_address)}
+                    title="Delete Assignment"
+                  >
+                    <Trash2 className="w-3 h-3 text-rose-500" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+          {/* Desktop Table View */}
+          <div className="clay-table-container">
+            <table className="clay-table">
               <thead>
-                <tr style={{ background: 'rgba(0, 0, 0, 0.4)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                  <th style={{ padding: '0.875rem 1.25rem', fontWeight: 600 }}>IPv4 Address</th>
-                  <th style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>Type</th>
-                  <th style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>Status</th>
-                  <th style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>Subnet</th>
-                  <th style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>Assigned Device</th>
-                  <th style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>Notes</th>
-                  <th style={{ padding: '0.875rem 1.25rem', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                <tr>
+                  <th>IPv4 Address</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Subnet</th>
+                  <th>Assigned Device</th>
+                  <th>Notes</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -446,7 +569,7 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
                             onClick={() => copyToClipboard(a.ipv4_address)}
                             title="Copy IP Address"
                           >
-                            {copiedIp === a.ipv4_address ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            {copiedIp === a.ipv4_address ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </td>
@@ -464,7 +587,7 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
                           style={{
                             fontSize: '0.725rem',
                             fontWeight: 600,
-                            padding: '0.2rem 0.5rem',
+                            padding: '0.2rem 0.55rem',
                             borderRadius: '9999px',
                             textTransform: 'uppercase',
                             ...getStatusBadgeStyle(a.status)
@@ -541,292 +664,321 @@ export const IPInventory: React.FC<IPInventoryProps> = ({ projectId, onProjectUp
       )}
 
       {/* Assignment Create / Edit Modal */}
-      {showAssignModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '520px', background: '#0f172a', border: '1px solid var(--border-active)' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: '0.25rem' }}>
-              {isEditingAssign ? 'Edit IP Assignment' : 'Assign IPv4 Address'}
-            </h2>
-            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Assign an IPv4 address to a network segment and device. Duplicates and DHCP collisions are blocked.
-            </p>
+      <AnimatePresence>
+        {showAssignModal && (
+          <motion.div 
+            className="clay-modal-overlay"
+            variants={modalBackdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={() => setShowAssignModal(false)}
+          >
+            <motion.div 
+              className="clay-modal-card" 
+              variants={modalCardVariants}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: '540px', overflowX: 'hidden' }}
+            >
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: '0.25rem' }}>
+                {isEditingAssign ? 'Edit IP Assignment' : 'Assign IPv4 Address'}
+              </h2>
+              <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                Assign an IPv4 address to a network segment and device. Duplicates and DHCP collisions are blocked.
+              </p>
 
-            {assignFormError && (
-              <div className="notice-box error" style={{ marginBottom: '1.25rem' }} role="alert">
-                <div className="notice-title">
-                  <AlertTriangle className="w-4 h-4" />
-                  Validation Conflict
+              {assignFormError && (
+                <div className="notice-box error" style={{ marginBottom: '1.25rem' }} role="alert">
+                  <div className="notice-title">
+                    <AlertTriangle className="w-4 h-4" />
+                    Validation Conflict
+                  </div>
+                  <div>{assignFormError}</div>
                 </div>
-                <div>{assignFormError}</div>
-              </div>
-            )}
+              )}
 
-            <form onSubmit={handleAssignSubmit}>
-              <div className="form-group">
-                <label htmlFor="assign-ip-input" className="form-label">IPv4 Address *</label>
-                <input
-                  id="assign-ip-input"
-                  type="text"
-                  className="text-input"
-                  placeholder="e.g. 192.168.20.15"
-                  value={ipAddress}
-                  onChange={(e) => setIpAddress(e.target.value)}
-                  required
-                />
-              </div>
+              <form onSubmit={handleAssignSubmit} style={{ width: '100%', maxWidth: '100%' }}>
+                <div className="form-group">
+                  <label htmlFor="assign-ip-input" className="form-label">IPv4 Address *</label>
+                  <input
+                    id="assign-ip-input"
+                    type="text"
+                    className="text-input"
+                    placeholder="e.g. 192.168.20.15"
+                    value={ipAddress}
+                    onChange={(e) => setIpAddress(e.target.value)}
+                    required
+                  />
+                </div>
 
-              <div className="input-row">
-                <div style={{ flex: 1 }}>
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
                   <label htmlFor="assign-subnet-select" className="form-label">Subnet</label>
-                  <select
+                  <ClaySelect
                     id="assign-subnet-select"
-                    className="select-input"
+                    variant="form"
+                    ariaLabel="Subnet"
                     value={assignSubnetId}
-                    onChange={(e) => setAssignSubnetId(e.target.value)}
-                  >
-                    <option value="">Unassigned to Subnet</option>
-                    {subnets.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.label} ({s.cidr})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setAssignSubnetId}
+                    options={[
+                      { value: '', label: 'Unassigned to Subnet' },
+                      ...subnets.map(s => ({ value: s.id, label: `${s.label} (${s.cidr})` }))
+                    ]}
+                  />
                 </div>
 
-                <div style={{ flex: 1 }}>
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
                   <label htmlFor="assign-device-select" className="form-label">Attached Device</label>
-                  <select
+                  <ClaySelect
                     id="assign-device-select"
-                    className="select-input"
+                    variant="form"
+                    ariaLabel="Attached Device"
                     value={assignDeviceId}
-                    onChange={(e) => setAssignDeviceId(e.target.value)}
-                  >
-                    <option value="">No Device (Standalone IP)</option>
-                    {devices.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} ({d.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="input-row" style={{ marginTop: '0.75rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label htmlFor="assign-type-select" className="form-label">Assignment Type</label>
-                  <select
-                    id="assign-type-select"
-                    className="select-input"
-                    value={assignType}
-                    onChange={(e) => setAssignType(e.target.value as AssignmentType)}
-                  >
-                    <option value="planned static">Planned Static</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="DHCP pool">DHCP Pool</option>
-                    <option value="gateway">Gateway</option>
-                    <option value="unassigned">Unassigned</option>
-                  </select>
+                    onChange={setAssignDeviceId}
+                    options={[
+                      { value: '', label: 'No Device (Standalone IP)' },
+                      ...devices.map(d => ({ value: d.id, label: `${d.name} (${d.role})` }))
+                    ]}
+                  />
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <label htmlFor="assign-status-select" className="form-label">Status</label>
-                  <select
-                    id="assign-status-select"
-                    className="select-input"
-                    value={assignStatus}
-                    onChange={(e) => setAssignStatus(e.target.value as AssignmentStatus)}
-                  >
-                    <option value="planned">Planned</option>
-                    <option value="active">Active</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="deprecated">Deprecated</option>
-                  </select>
+                <div className="input-row" style={{ marginTop: '0.75rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label htmlFor="assign-type-select" className="form-label">Assignment Type</label>
+                    <ClaySelect
+                      id="assign-type-select"
+                      variant="form"
+                      ariaLabel="Assignment Type"
+                      value={assignType}
+                      onChange={(val) => setAssignType(val as AssignmentType)}
+                      options={[
+                        { value: 'planned static', label: 'Planned Static' },
+                        { value: 'reserved', label: 'Reserved' },
+                        { value: 'DHCP pool', label: 'DHCP Pool' },
+                        { value: 'gateway', label: 'Gateway' },
+                        { value: 'unassigned', label: 'Unassigned' }
+                      ]}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label htmlFor="assign-status-select" className="form-label">Status</label>
+                    <ClaySelect
+                      id="assign-status-select"
+                      variant="form"
+                      ariaLabel="Status"
+                      value={assignStatus}
+                      onChange={(val) => setAssignStatus(val as AssignmentStatus)}
+                      options={[
+                        { value: 'planned', label: 'Planned' },
+                        { value: 'active', label: 'Active' },
+                        { value: 'reserved', label: 'Reserved' },
+                        { value: 'deprecated', label: 'Deprecated' }
+                      ]}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                <label htmlFor="assign-notes-input" className="form-label">Notes</label>
-                <textarea
-                  id="assign-notes-input"
-                  className="text-input"
-                  style={{ minHeight: '60px', resize: 'vertical' }}
-                  placeholder="e.g. Primary interface for student lab gateway."
-                  value={assignNotes}
-                  onChange={(e) => setAssignNotes(e.target.value)}
-                />
-              </div>
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                  <label htmlFor="assign-notes-input" className="form-label">Notes</label>
+                  <textarea
+                    id="assign-notes-input"
+                    className="text-input"
+                    style={{ minHeight: '60px', resize: 'vertical' }}
+                    placeholder="e.g. Primary interface for student lab gateway."
+                    value={assignNotes}
+                    onChange={(e) => setAssignNotes(e.target.value)}
+                  />
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setShowAssignModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  style={{ width: 'auto' }}
-                  disabled={assignSubmitting}
-                >
-                  {assignSubmitting ? 'Checking & Saving...' : isEditingAssign ? 'Save Changes' : 'Assign IP'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowAssignModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: 'auto' }}
+                    disabled={assignSubmitting}
+                  >
+                    {assignSubmitting ? 'Checking & Saving...' : isEditingAssign ? 'Save Changes' : 'Assign IP'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Device Management Drawer */}
-      {showDeviceDrawer && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'flex-end', zIndex: 1000 }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '540px', height: '100%', borderRadius: 0, background: '#0a0e17', borderLeft: '1px solid var(--border-active)', overflowY: 'auto', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div className="card-title">
-                <Server className="w-5 h-5 text-cyan-400" />
-                Project Devices ({devices.length})
-              </div>
-              <button
-                type="button"
-                className="copy-btn"
-                onClick={() => setShowDeviceDrawer(false)}
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-            </div>
-
-            {/* Quick Add Device Form */}
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: '0.75rem' }}>
-                Add New Device Record
-              </h4>
-              
-              {devFormError && (
-                <div className="notice-box error" style={{ padding: '0.5rem', marginBottom: '0.75rem', fontSize: '0.75rem' }}>
-                  {devFormError}
+      <AnimatePresence>
+        {showDeviceDrawer && (
+          <motion.div 
+            className="clay-drawer-overlay"
+            variants={modalBackdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={() => setShowDeviceDrawer(false)}
+          >
+            <motion.div 
+              className="clay-drawer-card" 
+              variants={drawerVariants}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: '540px' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div className="card-title">
+                  <Server className="w-5 h-5 text-indigo-500" />
+                  Project Devices ({devices.length})
                 </div>
-              )}
-
-              <form onSubmit={handleDeviceSubmit}>
-                <div className="input-row">
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="device-name-input" className="form-label">Hostname / Name *</label>
-                    <input
-                      id="device-name-input"
-                      type="text"
-                      className="text-input"
-                      placeholder="e.g. lab-switch-01"
-                      value={devName}
-                      onChange={(e) => setDevName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="device-type-select" className="form-label">Hardware Type</label>
-                    <select
-                      id="device-type-select"
-                      className="select-input"
-                      value={devType}
-                      onChange={(e) => setDevType(e.target.value as DeviceType)}
-                    >
-                      <option value="router">Router</option>
-                      <option value="switch">Switch</option>
-                      <option value="server">Server</option>
-                      <option value="workstation">Workstation</option>
-                      <option value="printer">Printer</option>
-                      <option value="access_point">Access Point</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="input-row" style={{ marginTop: '0.5rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="device-role-input" className="form-label">Functional Role *</label>
-                    <input
-                      id="device-role-input"
-                      type="text"
-                      className="text-input"
-                      placeholder="e.g. Lab Core Switch"
-                      value={devRole}
-                      onChange={(e) => setDevRole(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="device-mac-input" className="form-label">MAC Address</label>
-                    <input
-                      id="device-mac-input"
-                      type="text"
-                      className="text-input"
-                      placeholder="e.g. 00:1A:2B:3C:4D:5E"
-                      value={devMac}
-                      onChange={(e) => setDevMac(e.target.value)}
-                    />
-                  </div>
-                </div>
-
                 <button
-                  type="submit"
-                  className="btn-primary"
-                  style={{ marginTop: '1rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  type="button"
+                  className="copy-btn"
+                  onClick={() => setShowDeviceDrawer(false)}
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  Save Device
+                  <X className="w-5 h-5 text-slate-400" />
                 </button>
-              </form>
-            </div>
+              </div>
 
-            {/* List of Existing Devices */}
-            <div>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                Configured Devices
-              </h4>
-              {devices.length === 0 ? (
-                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
-                  No devices created yet.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {devices.map(d => (
-                    <div 
-                      key={d.id}
-                      style={{ 
-                        background: 'rgba(13, 19, 31, 0.7)', 
-                        border: '1px solid var(--border-subtle)', 
-                        borderRadius: 'var(--radius-md)', 
-                        padding: '0.75rem 1rem',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {getDeviceIcon(d.device_type)}
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-white)', fontSize: '0.9rem' }}>{d.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {d.role} {d.mac_address ? `• ${d.mac_address}` : ''}
+              {/* Quick Add Device Form */}
+              <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', boxShadow: 'var(--clay-shadow-sm)', marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: '0.75rem' }}>
+                  Add New Device Record
+                </h4>
+                
+                {devFormError && (
+                  <div className="notice-box error" style={{ padding: '0.5rem', marginBottom: '0.75rem', fontSize: '0.75rem' }}>
+                    {devFormError}
+                  </div>
+                )}
+
+                <form onSubmit={handleDeviceSubmit}>
+                  <div className="input-row">
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor="device-name-input" className="form-label">Hostname / Name *</label>
+                      <input
+                        id="device-name-input"
+                        type="text"
+                        className="text-input"
+                        placeholder="e.g. lab-switch-01"
+                        value={devName}
+                        onChange={(e) => setDevName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor="device-type-select" className="form-label">Hardware Type</label>
+                      <ClaySelect
+                        id="device-type-select"
+                        variant="form"
+                        ariaLabel="Hardware Type"
+                        value={devType}
+                        onChange={(val) => setDevType(val as DeviceType)}
+                        options={[
+                          { value: 'router', label: 'Router' },
+                          { value: 'switch', label: 'Switch' },
+                          { value: 'server', label: 'Server' },
+                          { value: 'workstation', label: 'Workstation' },
+                          { value: 'printer', label: 'Printer' },
+                          { value: 'access_point', label: 'Access Point' }
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-row" style={{ marginTop: '0.5rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor="device-role-input" className="form-label">Functional Role *</label>
+                      <input
+                        id="device-role-input"
+                        type="text"
+                        className="text-input"
+                        placeholder="e.g. Lab Core Switch"
+                        value={devRole}
+                        onChange={(e) => setDevRole(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor="device-mac-input" className="form-label">MAC Address</label>
+                      <input
+                        id="device-mac-input"
+                        type="text"
+                        className="text-input"
+                        placeholder="e.g. 00:1A:2B:3C:4D:5E"
+                        value={devMac}
+                        onChange={(e) => setDevMac(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ marginTop: '1rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Save Device
+                  </button>
+                </form>
+              </div>
+
+              {/* List of Existing Devices */}
+              <div>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  Configured Devices
+                </h4>
+                {devices.length === 0 ? (
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
+                    No devices created yet.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {devices.map(d => (
+                      <div 
+                        key={d.id}
+                        style={{ 
+                          background: 'var(--bg-secondary)', 
+                          border: '1px solid var(--border-active)', 
+                          borderRadius: 'var(--radius-md)', 
+                          boxShadow: 'var(--clay-shadow-sm)',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {getDeviceIcon(d.device_type)}
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-white)', fontSize: '0.9rem' }}>{d.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {d.role} {d.mac_address ? `• ${d.mac_address}` : ''}
+                            </div>
                           </div>
                         </div>
+                        <button
+                          type="button"
+                          className="copy-btn"
+                          style={{ color: 'var(--accent-rose)' }}
+                          onClick={() => handleDeleteDevice(d.id, d.name)}
+                          title="Delete Device"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="copy-btn"
-                        style={{ color: 'var(--accent-rose)' }}
-                        onClick={() => handleDeleteDevice(d.id, d.name)}
-                        title="Delete Device"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

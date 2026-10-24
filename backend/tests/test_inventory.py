@@ -176,3 +176,66 @@ class TestDeviceAndIPInventory:
         client.delete(f"/api/projects/{p_id}/assignments/{assign['id']}")
         v4 = client.get(f"/api/projects/{p_id}").json()["version"]
         assert v4 == v3 + 1
+
+    def test_network_and_broadcast_ips_rejected_for_standard_subnet(self, client: TestClient, test_project_with_subnet):
+        p_id = test_project_with_subnet["project"]["id"]
+        s_id = test_project_with_subnet["subnet"]["id"]
+        # Subnet is 192.168.20.0/26: network is .0, broadcast is .63
+
+        # Network address .0 should be rejected
+        resp_net = client.post(
+            f"/api/projects/{p_id}/assignments",
+            json={
+                "ipv4_address": "192.168.20.0",
+                "subnet_id": s_id,
+                "assignment_type": "planned static"
+            }
+        )
+        assert resp_net.status_code == 400
+        assert "Cannot assign network address" in resp_net.json()["detail"]
+
+        # Broadcast address .63 should be rejected
+        resp_bc = client.post(
+            f"/api/projects/{p_id}/assignments",
+            json={
+                "ipv4_address": "192.168.20.63",
+                "subnet_id": s_id,
+                "assignment_type": "planned static"
+            }
+        )
+        assert resp_bc.status_code == 400
+        assert "Cannot assign broadcast address" in resp_bc.json()["detail"]
+
+    def test_rfc3021_31_subnet_allows_both_ips(self, client: TestClient, test_project_with_subnet):
+        p_id = test_project_with_subnet["project"]["id"]
+        # Create /31 point-to-point link subnet
+        s_resp = client.post(
+            f"/api/projects/{p_id}/subnets",
+            json={
+                "cidr": "10.0.0.0/31",
+                "label": "P2P Router Link"
+            }
+        )
+        assert s_resp.status_code == 201
+        s_id = s_resp.json()["id"]
+
+        # Both 10.0.0.0 and 10.0.0.1 should be valid host assignments in /31
+        resp0 = client.post(
+            f"/api/projects/{p_id}/assignments",
+            json={
+                "ipv4_address": "10.0.0.0",
+                "subnet_id": s_id,
+                "assignment_type": "planned static"
+            }
+        )
+        assert resp0.status_code == 201
+
+        resp1 = client.post(
+            f"/api/projects/{p_id}/assignments",
+            json={
+                "ipv4_address": "10.0.0.1",
+                "subnet_id": s_id,
+                "assignment_type": "planned static"
+            }
+        )
+        assert resp1.status_code == 201

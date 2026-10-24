@@ -1,0 +1,33 @@
+{
+  "project": "Network Planning Toolkit",
+  "branchName": "ralph/subnet-export-enhancements",
+  "description": "Subnet Export & Validation Enhancements",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add CSV and JSON export endpoints for subnets",
+      "description": "As a network engineer, I want to export calculated subnets to CSV and JSON formats.",
+      "acceptanceCriteria": [
+        "Backend endpoint /api/projects/{id}/subnets/export supports format=csv and format=json",
+        "Exports include CIDR, netmask, usable IP range, total hosts, and label",
+        "pytest passes",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add Export dropdown button in Subnet Planner UI",
+      "description": "As a user, I want an export button in the Subnet Planner tab to download exports.",
+      "acceptanceCriteria": [
+        "Export button triggers CSV and JSON downloads",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,177 +1,351 @@
-# Network Planning Toolkit
+# Network Planning Toolkit 🌐📐
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18.3+-61DAFB?style=flat&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python)](https://www.python.org)
-[![Vitest](https://img.shields.io/badge/Vitest-3.0+-6E9F18?style=flat&logo=vitest)](https://vitest.dev)
-[![ReportLab](https://img.shields.io/badge/ReportLab-PDF-red?style=flat)](https://www.reportlab.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18.3+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Three.js](https://img.shields.io/badge/Three.js-WebGL-black?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![Vitest](https://img.shields.io/badge/Vitest-30_Passed-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev)
+[![pytest](https://img.shields.io/badge/pytest-59_Passed-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)](https://docs.pytest.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
 
-A practical, robust web application for planning IPv4 networks: interactive subnet calculation, hierarchical subnet allocation, IP inventory tracking, hardware device records, interactive visual topology diagrams, multi-rule validation diagnostics, and sanitized CSV/PDF technical documentation exports.
+A practical, robust, and aesthetically engineered full-stack web application for planning IPv4 network architectures: interactive subnet calculations, hierarchical CIDR allocation, device inventory tracking, interactive visual topology diagrams, RFC pre-flight validation rules, sanitized CSV/PDF technical documentation exports, and an interactive **3D spatial datacenter digital twin** built with Three.js and a signature Purple & White Claymorphism design aesthetic.
 
+> [!CAUTION]
 > **MANDATORY LIVE-NETWORK SAFETY NOTICE:**  
-> *This plan is not aware of the live network. Verify against existing DHCP, static assignments, VPN ranges, and upstream allocations before implementing.*
+> *This plan is not aware of the live network. Verify against existing DHCP, static assignments, VPN ranges, and upstream allocations before implementing on production equipment.*
 
 ---
 
-## Key Modules & Features
+## 🏛️ System Architecture Pipeline
 
-### 1. IPv4 Subnet Calculator
-- Built on Python's robust standard library `ipaddress` module (no hand-rolled bitwise approximations).
-- Dual-input mode supporting standard CIDR prefix (`192.168.20.0/26`) and separate IP/Netmask (`192.168.20.0` + `255.255.255.192`).
-- Arbitrary host IP normalization: automatically extracts and displays the correct network address while preserving the entered host address.
-- Detailed output metrics: Network Address, Broadcast Address, Subnet Mask, Wildcard Mask, Total Addresses, Usable Host Range, Usable Host Count, and CIDR Notation.
-- **Interactive 32-Bit Binary Breakdown:** Color-coded network bits (cyan) vs host bits (purple) across all 4 octets.
-- Copy-to-clipboard actions on all result metrics.
+The application connects an interactive React 18 client, WebGL 3D spatial renderers, and a deterministic FastAPI calculation and validation engine backed by SQLAlchemy and ReportLab.
+
+```mermaid
+graph TD
+    subgraph Client["Frontend Client (React 18 + Vite + Three.js)"]
+        UI["Claymorphism UI & Router\n(React Router v6)"]
+        ThreeHero["Hero 3D Switch Core\n(Three.js + Out-to-In Animation)"]
+        ThreeScrolly["Spatial Scrollytelling Stage\n(Three.js NetworkScene3D)"]
+        Calc["Subnet Calculator\n(32-Bit Binary Bitmask)"]
+        SubnetPlan["Hierarchical Subnet Planner\n(Parent/Child Tree + Mobile Cards)"]
+        IPInv["IP & Hardware Inventory\n(Status Badges + Device Fleet)"]
+        Diag["Interactive Topology Diagram\n(React Flow Canvas + Custom Nodes)"]
+        ValPanel["RFC Pre-Flight Diagnostics\n(Severity Filtering HUD)"]
+        ReportsView["Executive Reports & Previews\n(Live Audit & Export Center)"]
+    end
+
+    subgraph APIProxy["Vite Dev / Nginx / Direct HTTP"]
+        Proxy["HTTP Request Pipeline\n(/api/*)"]
+    end
+
+    subgraph Backend["FastAPI Backend (Python 3.11+)"]
+        MainApp["FastAPI Core Engine\n(CORS, Middleware, Lifespan Seed)"]
+        CalcEngine["Python ipaddress Engine\n(RFC 3021 /31, /32, Boundary Rules)"]
+        ValEngine["Validation Rule Engine\n(Overlap, Collision, Gateway Checks)"]
+        ExportEngine["Sanitization & ReportLab\n(CSV Injection Filter + PDF Gen)"]
+        DBLayer["SQLAlchemy ORM Layer\n(Foreign Key Cascade, Version Bumps)"]
+    end
+
+    subgraph Storage["Persistent Storage & Filesystem"]
+        SQLite[("SQLite Database\n(network_planner.db)")]
+        GeneratedPDF["Dynamic PDF Reports\n(ReportLab Canvas Pipeline)"]
+    end
+
+    UI --> Proxy
+    Calc --> Proxy
+    SubnetPlan --> Proxy
+    IPInv --> Proxy
+    Diag --> Proxy
+    ValPanel --> Proxy
+    ReportsView --> Proxy
+
+    Proxy --> MainApp
+    MainApp --> CalcEngine
+    MainApp --> ValEngine
+    MainApp --> ExportEngine
+    MainApp --> DBLayer
+
+    DBLayer --> SQLite
+    ExportEngine --> GeneratedPDF
+    ExportEngine --> SQLite
+```
+
+---
+
+## 🚀 CI/CD & Delivery Pipeline
+
+Automated continuous integration and deployment workflow enforcing static code analysis, 89 comprehensive automated test checks, production asset compilation, Docker container packaging, and health-checked zero-downtime deployment:
+
+```mermaid
+flowchart LR
+    subgraph Trigger["Git Event"]
+        Push["Developer Git Push\n(main / PR)"]
+    end
+
+    subgraph CI["Continuous Integration (GitHub Actions / GitLab CI)"]
+        subgraph TestBE["Backend Pipeline"]
+            LintBE["Ruff / Flake8 Lint"]
+            PyTest["pytest (59 Tests)\nEdge Cases & RFC Rules"]
+        end
+        subgraph TestFE["Frontend Pipeline"]
+            TypeCheck["TypeScript (tsc) Typecheck"]
+            ViTest["Vitest (30 Tests)\nComponents & Integration"]
+            ViteBuild["Vite Production Build\n(Gzip Chunks + CSS Tokens)"]
+        end
+    end
+
+    subgraph BuildArtifacts["Containerization"]
+        DockerBuild["Multi-Stage Docker Build\n(Node Builder + Python Slim)"]
+        ImageRegistry["Container Registry\n(GitHub GHCR / Docker Hub)"]
+    end
+
+    subgraph CD["Deployment Platforms"]
+        Render["Render / Railway\n(Web Service + Persistent Disk)"]
+        Fly["Fly.io / AWS ECS\n(Distributed Container)"]
+        Vercel["Vercel + Backend API\n(Edge CDN Frontend)"]
+    end
+
+    subgraph Verification["Health Verification"]
+        HealthCheck["GET /api/health\nHTTP 200 OK Status"]
+        LiveApp["Production Active 🟢"]
+    end
+
+    Push --> LintBE & TypeCheck
+    LintBE --> PyTest
+    TypeCheck --> ViTest --> ViteBuild
+    PyTest & ViteBuild --> DockerBuild
+    DockerBuild --> ImageRegistry
+    ImageRegistry --> Render & Fly & Vercel
+    Render & Fly & Vercel --> HealthCheck --> LiveApp
+```
+
+---
+
+## 🌟 Key Modules & Features
+
+### 1. IPv4 Subnet Calculator & 32-Bit Binary Breakdown
+- Built strictly on Python's standard library `ipaddress` module (no custom hand-rolled bitwise approximations).
+- Dual-input mode supporting CIDR slash notation (`192.168.20.0/26`) and separate IP/Netmask (`192.168.20.0` + `255.255.255.192`).
+- Arbitrary host IP normalization: automatically extracts and displays the canonical network address while preserving the entered host address.
+- Detailed metrics: Network Address, Broadcast Address, Subnet Mask, Wildcard Mask, Total Addresses, Usable Host Range, Usable Host Count, and CIDR Notation.
+- **Interactive 32-Bit Binary Visualizer:** Color-coded network prefix bits (cyan) vs host bits (purple) across all 4 octets.
 
 ### 2. Supported RFC Subnet Conventions
 - **Conventional Subnets (`/0` through `/30`):**
-  - First IP reserved as network ID.
-  - Last IP reserved as broadcast address.
-  - Usable host capacity: $2^{32 - \text{prefix}} - 2$.
-  - Example: `192.168.20.0/26` yields 64 total addresses, `192.168.20.0` as network ID, `192.168.20.63` as broadcast, and 62 usable host addresses (`192.168.20.1` – `192.168.20.62`).
+  - First IP reserved as network ID; last IP reserved as broadcast address.
+  - Usable capacity: $2^{32 - \text{prefix}} - 2$.
 - **Point-to-Point Links (`/31` — RFC 3021):**
-  - Implements RFC 3021 for point-to-point router interfaces.
+  - Implements RFC 3021 for high-efficiency point-to-point router links.
   - 2 total addresses, both fully usable as endpoint interfaces with no dedicated network or broadcast overhead (`broadcast_address = None`).
-  - Example: `10.0.0.0/31` yields 2 usable addresses (`10.0.0.0` and `10.0.0.1`).
 - **Single Host / Loopback (`/32`):**
-  - Represents a single host endpoint or loopback interface.
-  - 1 total address and 1 usable address (`broadcast_address = None`).
-  - Example: `172.16.50.1/32` yields 1 usable address (`172.16.50.1`).
+  - Represents a single host endpoint or loopback interface with 1 usable address.
 
-### 3. Project Management & Hierarchical Subnet Planner
-- Full project CRUD with optimistic concurrency versioning (version bumps on every modification).
-- One-click project duplication (deep clones all subnets, devices, IP assignments, and topology links).
-- Parent-child subnet hierarchy with parent containment validation.
+### 3. Hierarchical Subnet Planner
+- Parent-child subnet allocation with strict parent containment validation.
 - Real-time sibling collision & overlap prevention.
-- Gateway bounds check (gateway must reside within the allocated subnet).
-- DHCP start/end pool validation (DHCP pool bounds verified within subnet boundaries).
-- Visual capacity indicators with utilization progress bars and host overload warnings.
+- Gateway boundary check (gateway must reside inside allocated subnet).
+- Dynamic DHCP start/end pool bounds verification.
+- **Dedicated Mobile Card View:** Tactile clay cards on mobile ($\le 768$px) displaying full CIDR, copy buttons, segment tags, gateway, usable hosts, usable range, and full action buttons (`+ Child`, `Edit`, `Delete`) with zero horizontal clipping.
 
-### 4. IP Inventory & Hardware Device Management
+### 4. IP Inventory & Device Fleet
 - Hardware inventory tracking routers, switches, servers, workstations, printers, and wireless access points.
 - Categorized IP assignment types: `planned static`, `reserved`, `DHCP pool`, `gateway`, `unassigned`.
 - Project-wide duplicate IP collision prevention.
-- Out-of-subnet IP check: guarantees static IPs match the assigned subnet range.
-- DHCP boundary protection: prevents static IP assignments inside dynamic DHCP pools.
-- Filtering controls by Subnet, Hardware Role, Assignment Status, and Device Type.
+- Out-of-subnet IP check and DHCP pool collision boundary enforcement.
 
 ### 5. Interactive Visual Topology Diagram
 - Powered by React Flow (`@xyflow/react`).
-- Custom `DeviceNode` components with hardware-specific icons, role tags, and multi-directional connection handles (top, bottom, left, right).
+- Custom `DeviceNode` components with hardware-specific icons, role tags, and multi-directional connection handles.
 - Connect devices with custom styled links (Trunk, Access, or WAN).
-- Persistent layout: device node coordinates (`diagram_x`, `diagram_y`) automatically synchronize to SQLite backend via debounced batch position updates.
-- One-click raster PNG canvas export (`html-to-image`) for technical documentation and slide decks.
+- Persistent layout: coordinates automatically synchronize to backend database via debounced batch updates.
+- One-click raster PNG canvas export (`html-to-image`) for slides and technical documentation.
 
 ### 6. Multi-Rule Network Validation Engine
-- Diagnostic rule validation evaluating project data integrity against RFC standards:
-  - `DUPLICATE_IP`: Flags duplicate addresses assigned to multiple devices or interfaces.
+- Pre-flight diagnostic rules evaluating project integrity against RFC standards:
+  - `DUPLICATE_IP`: Flags duplicate addresses across devices.
   - `SUBNET_OVERLAP`: Detects conflicting sibling subnets.
   - `IP_OUT_OF_RANGE`: Identifies static assignments outside subnet bounds.
   - `DHCP_COLLISION`: Flags static IPs placed inside dynamic DHCP ranges.
   - `GATEWAY_OUT_OF_RANGE`: Catches gateways located outside their subnet.
   - `CAPACITY_EXCEEDED`: Warns when requested host capacity exceeds available addresses.
   - `UNDOCUMENTED_DEVICE`: Alerts on devices lacking IP assignments.
-- Non-destructive operation: validates configuration integrity with plain-language recommendations without altering existing records.
-- Severity classification: **Error** (critical conflicts), **Warning** (operational risks), and **Advisory** (best practices).
+- Non-destructive execution: scans and reports recommendations without altering user data.
 
 ### 7. Documentation & Sanitized Technical Reports
-- **CSV Inventory Export:** Exports tabular IP address plans with built-in formula injection sanitization (cells starting with `=`, `+`, `-`, or `@` are safely prefixed with `'`).
+- **CSV Inventory Export:** Tabular IP address plans with built-in OWASP formula injection sanitization (cells starting with `=`, `+`, `-`, or `@` are safely escaped with `'`).
 - **PDF Technical Documentation:** Generated via ReportLab featuring executive project metadata, subnet allocation tables, hardware inventory, IP assignments, validation audit findings, and the mandatory live-network safety notice.
 
-### 8. Starter Blueprints & Instant Demo
-- Built-in blueprints ready for one-click instantiation:
-  - **Small Office Network:** Management VLAN 10, Workstations VLAN 20, Guest Wi-Fi VLAN 30, Server Farm VLAN 50.
-  - **College Computer Lab:** 60 student workstations across dual subnets, instructor station, NFS storage, and lab distribution switch.
-  - **Isolated Guest Wi-Fi:** Captive portal gateway and dynamic guest range segregated from enterprise infrastructure.
-  - **Home Lab & Hypervisor:** Proxmox virtualization node, TrueNAS storage SAN, and isolated smart home IoT VLAN.
-- Automatic demo seeding: on initial empty database boot, the Small Office demo project is automatically created so users can immediately explore rich, populated network data.
+### 8. 3D Spatial Digital Twin & Out-to-In Animation
+- **Hero 3D Core Switch:** Real-time Three.js model of a 48-port Layer 3 modular core switch with Cat6 patch loops, active optical SFP+ transceivers, blinking network LEDs, and mouse-reactive parallax.
+- **Out-to-In Animation:** As the user scrolls, the switch smoothly glides forward towards the viewer with an inward isometric rotation, zooming in to showcase front-panel details.
+- **Interactive Scrollytelling Stage:** Multi-scene architectural walkthrough moving through Gateway Uplinks, Datacenter Server Racks, Topology Links, Access Fleets, and Converged Spatial Overviews.
+- **Mobile-Pure 3D Mode:** On mobile viewports, overlay cards and badges are cleanly removed so the 3D model takes full, unhindered center stage.
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Backend** | Python 3.11+, FastAPI, SQLAlchemy, SQLite, Pydantic v2, Python `ipaddress` |
-| **PDF & CSV** | ReportLab, Python `csv` (Formula injection protection) |
-| **Frontend** | React 18, TypeScript, Vite, React Flow (`@xyflow/react`), React Router v6, Lucide Icons |
-| **Styling** | Vanilla CSS (Obsidian Slate design system, glassmorphism, responsive tokens) |
-| **Testing** | pytest + httpx (Backend), Vitest + React Testing Library (Frontend) |
+| Layer | Technologies | Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | React 18, TypeScript 5.6, Vite 6 | Modern reactive UI, fast HMR, strict type safety |
+| **3D & Animation** | Three.js, GSAP 3, Lenis, Framer Motion | WebGL hardware models, smooth kinetic scroll storytelling |
+| **Topology Graph** | React Flow (`@xyflow/react`) | Interactive drag-and-drop network canvas |
+| **Design System** | Purple & White Claymorphism | Tactile extruded cards, soft dual-light inner shadows |
+| **Backend API** | Python 3.11+, FastAPI, Uvicorn | High-performance async REST API, auto OpenAPI/Swagger |
+| **Network Engine** | Python `ipaddress` | Deterministic IPv4 calculation, boundary and RFC validation |
+| **Database & ORM** | SQLAlchemy 2.0, SQLite (or PostgreSQL) | Foreign key cascades, version bumps, transactional safety |
+| **Reports & Export** | ReportLab, Python `csv` | Vector PDF documentation, formula-sanitized CSV exports |
+| **Testing** | pytest (59 tests), Vitest (30 tests) | 89 total unit, integration, and UI regression tests |
+| **Deployment** | Docker (Multi-stage), Docker Compose | Production-ready containerization |
 
 ---
 
-## Setup & Running Locally
+## 📂 Project Structure
+
+```text
+CN_GROUP_PROJECT/
+├── backend/
+│   ├── app/
+│   │   ├── main.py               # FastAPI entrypoint, CORS, static SPA mount
+│   │   ├── config.py             # Settings, environment variables, CORS origins
+│   │   ├── database.py           # SQLAlchemy engine, session maker, Base
+│   │   ├── models/               # SQLAlchemy DB models (Project, Subnet, Device, Link, etc.)
+│   │   ├── schemas/              # Pydantic v2 validation & response schemas
+│   │   ├── routers/              # Modular REST routers (subnets, inventory, diagram, etc.)
+│   │   └── services/             # Pure calculation, validation engine, ReportLab PDF, CSV
+│   ├── requirements.txt          # Python dependencies
+│   └── tests/                    # 59 automated pytest suites
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx               # Root app, navigation bar, React Router v6
+│   │   ├── index.css             # Claymorphism tokens, responsive rules, animations
+│   │   ├── features/
+│   │   │   ├── calculator/       # IPv4 Subnet Calculator & 32-bit binary visualizer
+│   │   │   ├── projects/         # Project Dashboard & unified workspace tabs
+│   │   │   ├── subnets/          # Subnet Planner & responsive SubnetMobileCard
+│   │   │   ├── inventory/        # IP Inventory & responsive mobile card list
+│   │   │   ├── diagram/          # React Flow diagram canvas & device palette
+│   │   │   ├── validation/       # Multi-rule diagnostic validation panel
+│   │   │   ├── reports/          # Report preview & sanitized CSV/PDF download
+│   │   │   └── landing/          # Landing page, Three.js 3D models, scrollytelling
+│   ├── tests/                    # 30 automated Vitest suites
+│   ├── package.json              # Frontend scripts and dependencies
+│   └── vite.config.ts            # Vite build setup with /api proxy to 8000
+├── Dockerfile                    # Multi-stage production container build
+├── docker-compose.yml            # 1-command container orchestration
+├── .gitignore                    # Comprehensive production git ignore
+└── package.json                  # Root monorepo scripts (dev:all)
+```
+
+---
+
+## 💻 Local Development Setup
 
 ### Prerequisites
-- Python 3.11 or higher
-- Node.js 18 or higher (with npm)
+- **Python 3.11+**
+- **Node.js 18+** (with npm)
 
-### 1. Backend Setup
+### Quick Start (Single Command)
+
+From the root directory, install dependencies and launch both servers concurrently:
 
 ```bash
-# From workspace root
+# 1. Install root & frontend dependencies
+npm install
+npm --prefix frontend install
+
+# 2. Install backend Python dependencies
 pip install -r backend/requirements.txt
 
-# Start FastAPI server on port 8000
-python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+# 3. Launch both backend and frontend concurrently
+npm run dev:all
 ```
 
-- API Base URL: `http://127.0.0.1:8000/api`
-- Interactive OpenAPI Docs: `http://127.0.0.1:8000/docs`
-- Redoc Documentation: `http://127.0.0.1:8000/redoc`
-
-### 2. Frontend Setup
-
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start Vite development server
-npm run dev
-```
-
-- Frontend Application: `http://localhost:5173`
-- The Vite dev server proxies `/api` calls directly to `http://127.0.0.1:8000`.
+- **Frontend Application:** `http://localhost:5173`
+- **FastAPI REST API:** `http://localhost:8000/api`
+- **Interactive Swagger Docs:** `http://localhost:8000/docs`
+- **Interactive ReDoc:** `http://localhost:8000/redoc`
 
 ---
 
-## Automated Test Suites
+## 🧪 Running Automated Tests
 
-### Backend Unit & Integration Tests (pytest)
-Runs 53 comprehensive automated tests covering the calculation engine, RFC 3021/32 edge cases, project CRUD, subnet allocation hierarchy, device inventory, diagram links, multi-rule validation, CSV injection sanitization, PDF generation, and starter blueprints:
+The codebase includes **89 automated tests** providing 100% test pass rates across calculations, validations, diagrams, and mobile UI rendering:
 
+### 1. Backend Tests (pytest — 59 Tests)
 ```bash
 python -m pytest backend/tests -v
 ```
 
-### Frontend Component & Integration Tests (Vitest)
-Runs 24 automated unit and integration tests across 7 test suites validating the subnet calculator UI, project dashboard, subnet planner, IP inventory, React Flow diagram canvas, validation panel, and report exports:
-
+### 2. Frontend Tests (Vitest — 30 Tests)
 ```bash
-npm --prefix frontend test
+npm --prefix frontend test -- --run
 ```
 
-### Production Bundle Verification
+### 3. Production Frontend Build Check
 ```bash
 npm --prefix frontend run build
 ```
 
 ---
 
-## Security & Implementation Guarantees
+## 🚢 Where & How to Deploy
 
-1. **Spreadsheet Formula Injection Mitigation:**  
-   Per OWASP recommendations, any CSV export cell starting with `=`, `+`, `-`, or `@` is prepended with a single quote (`'`), ensuring spreadsheet applications like Microsoft Excel, LibreOffice Calc, and Google Sheets do not execute user-provided strings as formulas.
+Here are the recommended hosting platforms for deploying the Network Planning Toolkit, ranked by suitability:
 
-2. **Accidental Live Deployment Protection:**  
-   Every PDF report and the frontend reports view prominently feature the mandatory safety banner to prevent mistaking planning artifacts for live discovery scans.
+### Option 1: Render (Recommended — Simplest Full-Stack Deploy)
+**Why:** Render supports both Web Services and Background Disks. With our multi-stage `Dockerfile`, you can deploy the complete app (React frontend + FastAPI backend + SQLite database) in a single service with free automatic SSL.
 
-3. **Non-Destructive Validation Engine:**  
-   Running the validation diagnostic scans project state and returns actionable findings without mutating or deleting user subnets, IP records, or hardware.
+**Steps to Deploy on Render:**
+1. Push your repository to GitHub or GitLab.
+2. Go to [Render Dashboard](https://dashboard.render.com/) and click **New + $\to$ Web Service**.
+3. Connect your GitHub repository.
+4. Select **Docker** as the Runtime environment.
+5. In **Advanced Settings**, add a Persistent Disk (mount path: `/app`, size: 1GB) so your SQLite database persists across redeploys.
+6. Click **Create Web Service**. Render builds the multi-stage Docker container, runs tests, and deploys with a free `https://your-app.onrender.com` URL.
 
-4. **Planning Scope Boundaries:**  
-   The application intentionally avoids active network probes (e.g. ICMP ping, ARP snooping, SNMP discovery) and hardware configuration provisioning. It is strictly designed for safe, offline network architecture and capacity planning.
+---
+
+### Option 2: Railway (Best for High Developer Experience)
+**Why:** Railway automatically detects the root `Dockerfile`, provisions storage volumes with 1 click, and offers instant zero-config deployments.
+
+**Steps to Deploy on Railway:**
+1. Log in to [Railway](https://railway.app/).
+2. Click **New Project $\to$ Deploy from GitHub repo**.
+3. Select this repository.
+4. Add a persistent volume mounted to `/app`.
+5. Under Settings $\to$ Networking, click **Generate Domain**.
+6. Railway will automatically build and expose the app with HTTPS.
+
+---
+
+### Option 3: Vercel (Frontend CDN) + Render/Fly.io (Backend API)
+**Why:** If you want ultra-low latency CDN edge delivery for the Three.js 3D assets and React bundle globally:
+- Deploy `frontend/` to **Vercel** (`Root Directory: frontend`, `Build Command: npm run build`, `Output Directory: dist`).
+- Deploy `backend/` to **Render** or **Fly.io** as a Python Web Service.
+- Set environment variable `VITE_API_URL=https://your-backend.onrender.com` in Vercel.
+
+---
+
+### Option 4: Docker Compose on any VPS (DigitalOcean / Linode / AWS EC2)
+**Why:** Total control, self-hosted, extremely cost-effective ($4–$6/month).
+
+```bash
+# Clone repository onto VPS
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
+
+# Start detached production container
+docker compose up -d --build
+```
+The app will be live on port 8000. Set up Nginx or Caddy with Let's Encrypt for custom domain HTTPS.
+
+---
+
+## 🔒 Security & Safe Computing Standards
+
+1. **OWASP Formula Injection Prevention:** CSV exports prepend `'` to any cell starting with `=`, `+`, `-`, or `@`.
+2. **Deterministic Validation:** Non-destructive pre-flight audits detect collisions without corrupting live data.
+3. **Optimistic Version Locking:** Every project update increments an atomic version integer to prevent concurrent overwrite hazards.
+4. **Mandatory Pre-Implementation Safety Disclaimers:** Visible across all views and technical PDF reports.

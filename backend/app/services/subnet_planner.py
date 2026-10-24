@@ -49,9 +49,10 @@ def validate_ip_in_subnet(ip_str: Optional[str], network: ipaddress.IPv4Network,
 def validate_dhcp_range(
     dhcp_start: Optional[str],
     dhcp_end: Optional[str],
-    network: ipaddress.IPv4Network
+    network: ipaddress.IPv4Network,
+    gateway: Optional[str] = None
 ) -> None:
-    """Validate that DHCP range sits inside the subnet and start <= end."""
+    """Validate that DHCP range sits inside the subnet, start <= end, and gateway does not collide."""
     if not dhcp_start and not dhcp_end:
         return
     if (dhcp_start and not dhcp_end) or (dhcp_end and not dhcp_start):
@@ -67,6 +68,14 @@ def validate_dhcp_range(
         raise ValueError(
             f"DHCP start address '{dhcp_start}' cannot be higher than DHCP end address '{dhcp_end}'."
         )
+
+    if gateway and gateway.strip():
+        gw_addr = ipaddress.IPv4Address(gateway.strip())
+        if int(start_addr) <= int(gw_addr) <= int(end_addr):
+            raise ValueError(
+                f"Configured default gateway '{gateway.strip()}' cannot fall inside the dynamic DHCP pool range "
+                f"({dhcp_start.strip()} - {dhcp_end.strip()})."
+            )
 
 
 def validate_containment(child_net: ipaddress.IPv4Network, parent_net: ipaddress.IPv4Network) -> None:

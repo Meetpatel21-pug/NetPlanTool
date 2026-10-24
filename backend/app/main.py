@@ -41,6 +41,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,3 +62,12 @@ app.include_router(templates_router, prefix=settings.API_PREFIX)
 @app.get("/api/health", tags=["system"])
 def health_check():
     return {"status": "ok", "project": settings.PROJECT_NAME, "version": "1.0.0"}
+
+
+# In production deployment: mount static SPA built assets
+import os
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+if os.path.exists(frontend_dist):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="static")
+

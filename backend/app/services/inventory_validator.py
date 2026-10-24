@@ -43,6 +43,17 @@ def validate_ip_assignment(
                 f"IP address '{ipv4_address}' falls outside the assigned subnet {subnet.cidr} ({subnet.label})."
             )
 
+        # Disallow assigning network and broadcast addresses for standard subnets (prefix < 31)
+        if network.prefixlen < 31:
+            if candidate_ip == network.network_address:
+                raise ValueError(
+                    f"Cannot assign network address '{ipv4_address}' for subnet {subnet.cidr}."
+                )
+            if candidate_ip == network.broadcast_address:
+                raise ValueError(
+                    f"Cannot assign broadcast address '{ipv4_address}' for subnet {subnet.cidr}."
+                )
+
         # 3. Collision with DHCP pool
         # If the assignment is static or reserved, it cannot fall inside the dynamic DHCP pool
         if assignment_type in ["planned static", "reserved"] and subnet.dhcp_start and subnet.dhcp_end:

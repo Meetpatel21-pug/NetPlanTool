@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { NetworkDiagram } from '../src/features/diagram/NetworkDiagram';
+import { DeviceNode } from '../src/features/diagram/DeviceNode';
 import * as devApi from '../src/api/devices';
 import * as linkApi from '../src/api/links';
 import * as assignApi from '../src/api/assignments';
@@ -156,4 +158,88 @@ describe('NetworkDiagram Component', () => {
       ]));
     });
   });
+
+  it('renders DeviceNode with separated source and target handles preventing overlap', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <DeviceNode
+          id="dev-node-1"
+          data={{
+            device: mockDevices[0],
+            ip: '192.168.20.1',
+            subnetLabel: 'Lab Subnet'
+          }}
+          selected={false}
+          selectable={true}
+          deletable={true}
+          draggable={true}
+          type="deviceNode"
+          zIndex={1}
+          isConnectable={true}
+          positionAbsoluteX={0}
+          positionAbsoluteY={0}
+          dragging={false}
+        />
+      </ReactFlowProvider>
+    );
+
+    const targetHandles = container.querySelectorAll('.diagram-handle-target');
+    const sourceHandles = container.querySelectorAll('.diagram-handle-source');
+    expect(targetHandles.length).toBe(4);
+    expect(sourceHandles.length).toBe(4);
+
+    const topTarget = (container.querySelector('[data-handleid="top-t"]') || container.querySelector('#top-t')) as HTMLElement;
+    const topSource = (container.querySelector('[data-handleid="top-s"]') || container.querySelector('#top-s')) as HTMLElement;
+    expect(topTarget).not.toBeNull();
+    expect(topSource).not.toBeNull();
+    expect(topTarget.style.left).toBe('35%');
+    expect(topSource.style.left).toBe('65%');
+
+    const leftTarget = (container.querySelector('[data-handleid="left-t"]') || container.querySelector('#left-t')) as HTMLElement;
+    const leftSource = (container.querySelector('[data-handleid="left-s"]') || container.querySelector('#left-s')) as HTMLElement;
+    expect(leftTarget).not.toBeNull();
+    expect(leftSource).not.toBeNull();
+    expect(leftTarget.style.top).toBe('35%');
+    expect(leftSource.style.top).toBe('65%');
+  });
+
+  it('toggles canvas fullscreen mode and excludes MiniMap', async () => {
+    vi.spyOn(devApi, 'fetchProjectDevices').mockResolvedValue(mockDevices);
+    vi.spyOn(linkApi, 'fetchProjectLinks').mockResolvedValue(mockLinks);
+    vi.spyOn(assignApi, 'fetchProjectAssignments').mockResolvedValue([]);
+    vi.spyOn(subApi, 'fetchProjectSubnets').mockResolvedValue([]);
+
+    const { container } = render(<NetworkDiagram projectId="proj-1" />);
+
+    // Verify MiniMap is removed from the DOM
+    expect(container.querySelector('.react-flow__minimap')).toBeNull();
+
+    // Verify fullscreen button exists in toolbar and controls
+    const fsToolbarBtn = screen.getByRole('button', { name: /Fullscreen Canvas/i });
+    expect(fsToolbarBtn).toBeInTheDocument();
+
+    const fsControlBtn = screen.getByRole('button', { name: /Toggle Fullscreen/i });
+    expect(fsControlBtn).toBeInTheDocument();
+
+    // Toggle fullscreen via control button
+    fireEvent.click(fsControlBtn);
+
+    await waitFor(() => {
+      const exitBtns = screen.getAllByRole('button', { name: /Exit Fullscreen/i });
+      expect(exitBtns.length).toBeGreaterThan(0);
+      const canvasBox = container.querySelector('.react-flow-clay-canvas');
+      expect(canvasBox).toHaveClass('is-fullscreen');
+    });
+
+    // Toggle exit fullscreen
+    const exitBtns = screen.getAllByRole('button', { name: /Exit Fullscreen/i });
+    fireEvent.click(exitBtns[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /Exit Fullscreen/i })).toBeNull();
+      const canvasBox = container.querySelector('.react-flow-clay-canvas');
+      expect(canvasBox).not.toHaveClass('is-fullscreen');
+    });
+  });
 });
+

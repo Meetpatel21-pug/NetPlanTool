@@ -14,6 +14,8 @@ import {
   Clock,
   RefreshCw
 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { cardItemVariants, containerStaggerVariants, pageEntranceVariants } from '../../utils/motion';
 
 interface ReportScreenProps {
   projectId: string;
@@ -61,7 +63,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
       <div className="safety-banner" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem' }}>
         <AlertTriangle className="w-5 h-5" style={{ color: 'var(--accent-amber)', flexShrink: 0, marginTop: '0.1rem' }} />
         <div>
-          <strong style={{ color: '#fbbf24', display: 'block', marginBottom: '0.25rem' }}>
+          <strong style={{ color: '#92400e', display: 'block', marginBottom: '0.25rem' }}>
             MANDATORY LIVE-NETWORK SAFETY NOTICE
           </strong>
           <span>
@@ -89,30 +91,39 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
       )}
 
       {/* Export Action Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+      <motion.div 
+        variants={containerStaggerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.25rem' }}
+      >
         {/* PDF Export Card */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85))',
-          border: '1px solid rgba(56, 189, 248, 0.3)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          gap: '1.25rem',
-          boxShadow: 'var(--shadow-md)'
-        }}>
+        <motion.div 
+          variants={cardItemVariants}
+          style={{
+            background: 'var(--bg-card)',
+            border: '2px solid rgba(255, 255, 255, 0.7)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: '1.25rem',
+            boxShadow: 'var(--clay-shadow)',
+            transition: 'all var(--transition-fast)'
+          }}
+        >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
               <div style={{
-                width: '36px',
-                height: '36px',
+                width: '38px',
+                height: '38px',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(56, 189, 248, 0.15)',
+                background: 'rgba(155, 109, 255, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent-cyan)'
+                color: 'var(--accent-indigo)'
               }}>
                 <FileText className="w-5 h-5" />
               </div>
@@ -147,27 +158,31 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
               Includes title page, subnet table, IP inventory, and validation findings
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* CSV Export Card */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85))',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          gap: '1.25rem',
-          boxShadow: 'var(--shadow-md)'
-        }}>
+        <motion.div 
+          variants={cardItemVariants}
+          style={{
+            background: 'var(--bg-card)',
+            border: '2px solid rgba(255, 255, 255, 0.7)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: '1.25rem',
+            boxShadow: 'var(--clay-shadow)',
+            transition: 'all var(--transition-fast)'
+          }}
+        >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
               <div style={{
-                width: '36px',
-                height: '36px',
+                width: '38px',
+                height: '38px',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(16, 185, 129, 0.15)',
+                background: 'rgba(94, 196, 160, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -180,7 +195,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
               </h3>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Raw tabular data export of all IP assignments, device associations, roles, and status fields. Sanitized against formula injection vulnerability (<code style={{ color: 'var(--accent-cyan)' }}>=, +, -, @</code>).
+              Raw tabular data export of all IP assignments, device associations, roles, and status fields. Sanitized against formula injection vulnerability (<code className="mono-spec" style={{ color: 'var(--accent-cyan)' }}>=, +, -, @</code>).
             </p>
           </div>
 
@@ -191,8 +206,8 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
               className="btn-primary"
               style={{
                 textDecoration: 'none',
-                background: 'linear-gradient(135deg, #059669, #10b981)',
-                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.35)',
+                background: 'linear-gradient(145deg, #10b981, #059669)',
+                boxShadow: 'var(--clay-shadow-sm)',
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
@@ -207,20 +222,26 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
               Directly compatible with Microsoft Excel, Google Sheets & LibreOffice
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Report Preview Breakdown */}
       {preview && (
-        <div style={{
-          background: 'rgba(13, 19, 31, 0.75)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.25rem'
-        }}>
+        <motion.div 
+          variants={pageEntranceVariants}
+          initial="hidden"
+          animate="visible"
+          style={{
+            background: 'var(--bg-card)',
+            border: '2px solid rgba(255, 255, 255, 0.7)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem',
+            boxShadow: 'var(--clay-shadow)'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-white)' }}>
@@ -243,7 +264,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
                 <span className="result-label">Subnets</span>
                 <Layers className="w-4 h-4" style={{ color: 'var(--accent-cyan)' }} />
               </div>
-              <div className="result-value">{preview.stats.subnet_count}</div>
+              <div className="result-value tabular-nums">{preview.stats.subnet_count}</div>
               <div className="result-subtext">Configured ranges</div>
             </div>
 
@@ -252,7 +273,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
                 <span className="result-label">Devices</span>
                 <Cpu className="w-4 h-4" style={{ color: 'var(--accent-indigo)' }} />
               </div>
-              <div className="result-value">{preview.stats.device_count}</div>
+              <div className="result-value tabular-nums">{preview.stats.device_count}</div>
               <div className="result-subtext">Documented hardware</div>
             </div>
 
@@ -261,7 +282,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
                 <span className="result-label">Allocated IPs</span>
                 <Server className="w-4 h-4" style={{ color: 'var(--accent-purple)' }} />
               </div>
-              <div className="result-value">{preview.stats.assignment_count}</div>
+              <div className="result-value tabular-nums">{preview.stats.assignment_count}</div>
               <div className="result-subtext">Static & reserved hosts</div>
             </div>
 
@@ -274,7 +295,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
                   <AlertTriangle className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />
                 )}
               </div>
-              <div className="result-value" style={{ color: preview.stats.issue_count === 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>
+              <div className="result-value tabular-nums" style={{ color: preview.stats.issue_count === 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>
                 {preview.stats.issue_count}
               </div>
               <div className="result-subtext">
@@ -285,10 +306,11 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
 
           {/* Document Section Checklist */}
           <div style={{ 
-            background: 'rgba(0, 0, 0, 0.3)', 
-            padding: '1rem', 
+            background: 'var(--bg-secondary)', 
+            padding: '1.25rem', 
             borderRadius: 'var(--radius-md)', 
-            border: '1px solid var(--border-subtle)' 
+            border: '1px solid var(--border-active)',
+            boxShadow: 'var(--clay-shadow-sm)'
           }}>
             <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-white)', marginBottom: '0.5rem' }}>
               Included Technical Sections:
@@ -320,7 +342,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({ projectId }) => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { LandingPage } from './features/landing/LandingPage';
 import { SubnetCalculator } from './features/calculator/SubnetCalculator';
 import { ProjectDashboard } from './features/projects/ProjectDashboard';
 import { ProjectWorkspace } from './features/projects/ProjectWorkspace';
@@ -7,28 +8,13 @@ import {
   Network, 
   Calculator, 
   Layers, 
-  Server, 
-  Share2, 
-  CheckCircle2, 
-  FileText, 
   AlertTriangle 
 } from 'lucide-react';
 
 const NavigationBar: React.FC = () => {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-
-  const projectMatch = location.pathname.match(/^\/projects\/([^\/]+)/);
-  const isInsideWorkspace = Boolean(projectMatch);
-  const currentProjectId = projectMatch ? projectMatch[1] : (typeof localStorage !== 'undefined' ? localStorage.getItem('last_project_id') : null);
-  const currentTab = isInsideWorkspace ? (searchParams.get('tab') || 'subnets') : null;
-
-  const getWorkspaceUrl = (tab: string) => {
-    if (currentProjectId) {
-      return `/projects/${currentProjectId}?tab=${tab}`;
-    }
-    return '/projects';
-  };
+  const isProjectsActive = location.pathname === '/projects' || location.pathname.startsWith('/projects');
+  const isCalculatorActive = location.pathname === '/calculator';
 
   return (
     <header className="app-header">
@@ -49,61 +35,38 @@ const NavigationBar: React.FC = () => {
       <nav className="nav-links">
         <Link 
           to="/calculator" 
-          className={`nav-item ${location.pathname === '/calculator' ? 'active' : ''}`}
+          className={`nav-item ${isCalculatorActive ? 'active' : ''}`}
         >
           <Calculator className="w-4 h-4" />
           Subnet Calculator
         </Link>
         <Link 
-          to={isInsideWorkspace ? `/projects/${currentProjectId}?tab=subnets` : '/projects'} 
-          className={`nav-item ${location.pathname === '/projects' || (isInsideWorkspace && currentTab === 'subnets') ? 'active' : ''}`}
+          to="/projects" 
+          className={`nav-item ${isProjectsActive ? 'active' : ''}`}
         >
           <Layers className="w-4 h-4" />
-          {isInsideWorkspace ? 'Subnets' : 'Projects'}
-        </Link>
-        <Link 
-          to={getWorkspaceUrl('inventory')} 
-          className={`nav-item ${isInsideWorkspace && currentTab === 'inventory' ? 'active' : ''}`}
-          title={currentProjectId ? "Go to IP Inventory" : "Open Projects to manage IP inventory"}
-        >
-          <Server className="w-4 h-4" />
-          IP Inventory
-        </Link>
-        <Link 
-          to={getWorkspaceUrl('diagram')} 
-          className={`nav-item ${isInsideWorkspace && currentTab === 'diagram' ? 'active' : ''}`}
-          title={currentProjectId ? "Go to Network Diagram" : "Open Projects to view topology diagram"}
-        >
-          <Share2 className="w-4 h-4" />
-          Diagram
-        </Link>
-        <Link 
-          to={getWorkspaceUrl('validation')} 
-          className={`nav-item ${isInsideWorkspace && currentTab === 'validation' ? 'active' : ''}`}
-          title={currentProjectId ? "Run Network Validation" : "Open Projects to validate plan"}
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          Validation
-        </Link>
-        <Link 
-          to={getWorkspaceUrl('reports')} 
-          className={`nav-item ${isInsideWorkspace && currentTab === 'reports' ? 'active' : ''}`}
-          title={currentProjectId ? "Generate & Export Reports" : "Open Projects to generate reports"}
-        >
-          <FileText className="w-4 h-4" />
-          Reports
+          Projects
         </Link>
       </nav>
     </header>
   );
 };
 
-export const App: React.FC = () => {
+const MainLayout: React.FC = () => {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+
   return (
-    <BrowserRouter>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <NavigationBar />
-        
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <NavigationBar />
+      
+      {isLandingPage ? (
+        <main style={{ flex: 1, width: '100%' }}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+          </Routes>
+        </main>
+      ) : (
         <main className="container" style={{ flex: 1 }}>
           {/* Mandatory Pre-Implementation Safety Warning Banner */}
           <div className="safety-banner">
@@ -115,13 +78,20 @@ export const App: React.FC = () => {
           </div>
 
           <Routes>
-            <Route path="/" element={<ProjectDashboard />} />
             <Route path="/calculator" element={<SubnetCalculator />} />
             <Route path="/projects" element={<ProjectDashboard />} />
             <Route path="/projects/:id" element={<ProjectWorkspace />} />
           </Routes>
         </main>
-      </div>
+      )}
+    </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MainLayout />
     </BrowserRouter>
   );
 };

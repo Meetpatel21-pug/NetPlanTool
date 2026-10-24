@@ -68,7 +68,7 @@ def create_subnet_allocation(
         if payload.gateway:
             validate_ip_in_subnet(payload.gateway, candidate_net, "Default gateway")
         if payload.dhcp_start or payload.dhcp_end:
-            validate_dhcp_range(payload.dhcp_start, payload.dhcp_end, candidate_net)
+            validate_dhcp_range(payload.dhcp_start, payload.dhcp_end, candidate_net, payload.gateway)
 
         # 3. Containment check (if child subnet)
         if payload.parent_subnet_id:
@@ -147,17 +147,43 @@ def update_subnet_allocation(
         candidate_net = parse_network(new_cidr)
         normalized_cidr = str(candidate_net)
 
-        new_gateway = payload.gateway if payload.gateway is not None else subnet.gateway
+        if payload.gateway is not None:
+            raw_gw = payload.gateway.strip() if isinstance(payload.gateway, str) else ""
+            new_gateway = raw_gw if raw_gw else None
+        else:
+            new_gateway = subnet.gateway
+
         if new_gateway:
             validate_ip_in_subnet(new_gateway, candidate_net, "Default gateway")
 
-        new_dhcp_start = payload.dhcp_start if payload.dhcp_start is not None else subnet.dhcp_start
-        new_dhcp_end = payload.dhcp_end if payload.dhcp_end is not None else subnet.dhcp_end
-        if new_dhcp_start or new_dhcp_end:
-            validate_dhcp_range(new_dhcp_start, new_dhcp_end, candidate_net)
+        if payload.dhcp_start is not None:
+            raw_s = payload.dhcp_start.strip() if isinstance(payload.dhcp_start, str) else ""
+            new_dhcp_start = raw_s if raw_s else None
+        else:
+            new_dhcp_start = subnet.dhcp_start
 
-        parent_id = payload.parent_subnet_id if payload.parent_subnet_id is not None else subnet.parent_subnet_id
+        if payload.dhcp_end is not None:
+            raw_e = payload.dhcp_end.strip() if isinstance(payload.dhcp_end, str) else ""
+            new_dhcp_end = raw_e if raw_e else None
+        else:
+            new_dhcp_end = subnet.dhcp_end
+
+        if new_dhcp_start or new_dhcp_end:
+            validate_dhcp_range(new_dhcp_start, new_dhcp_end, candidate_net, new_gateway)
+
+        if payload.parent_subnet_id is not None:
+            raw_p = payload.parent_subnet_id.strip() if isinstance(payload.parent_subnet_id, str) else ""
+            parent_id = raw_p if raw_p else None
+        else:
+            parent_id = subnet.parent_subnet_id
+
         if parent_id:
+            if parent_id == subnet.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A subnet cannot be its own parent."
+                )
+
             parent = db.query(Subnet).filter(
                 Subnet.id == parent_id,
                 Subnet.project_id == project.id
@@ -167,6 +193,22 @@ def update_subnet_allocation(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Parent subnet '{parent_id}' does not exist in this project."
                 )
+
+            # Prevent cyclic hierarchy (parent cannot be a descendant of subnet)
+            curr_p = parent
+            visited = set()
+            while curr_p:
+                if curr_p.id == subnet.id or curr_p.parent_subnet_id == subnet.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Cyclic subnet hierarchy detected. A subnet cannot have one of its descendants as parent."
+                    )
+                if curr_p.id in visited:
+                    break
+                visited.add(curr_p.id)
+                if not curr_p.parent_subnet_id:
+                    break
+                curr_p = db.query(Subnet).filter(Subnet.id == curr_p.parent_subnet_id, Subnet.project_id == project.id).first()
             parent_net = parse_network(parent.cidr)
             validate_containment(candidate_net, parent_net)
 
